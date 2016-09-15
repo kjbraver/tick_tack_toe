@@ -54,14 +54,18 @@ class GameBoard
         player_count += 1 if @move_log[square].eql?(@player_mark)
       end
 
-      if(player_count == 2)
+      if(player_count + ai_count == 3)
+        if(player_count == 3)
+          @board_state[key] = :win_player
+        elsif(ai_count == 3)
+          @board_state[key] = :win_ai
+        else
+          @board_state[key] = :locked
+        end
+      elsif(player_count == 2)
         @board_state[key] = :lean_player
       elsif(ai_count == 2)
         @board_state[key] = :lean_ai
-      elsif(player_count == 3)
-        @board_state[key] = :win_player
-      elsif(ai_count == 3)
-        @board_state[key] = :win_ai
       else
         @board_state[key] = :neutral
       end
@@ -71,7 +75,6 @@ class GameBoard
   #if game can be won on next turn, return that the location of that square immediately
   #else return the location of a square where there is threat of loss
   #if no threat of loss return random empty square
-  #if the game is over return nil 
   def prioritize_moveset
     analyze_board
     priority_move = nil
@@ -101,12 +104,14 @@ class GameBoard
     @move_log[location] = move
   end
 
-  def three_in_a_row?
+  def game_results
     analyze_board
+    return :catsgame if @open_squares.empty?
     @board_state.each do |location, state|
-      return true if state.eql?(:win_player) || state.eql?(:win_ai)
+      return :player if state.eql?(:win_player) 
+      return :ai if state.eql?(:win_ai)
     end
-    return false
+    return nil
   end
 
   public
@@ -138,12 +143,12 @@ class GameBoard
 
   #displays still avaliable moves
   def display_open_squares
-    @open_squares.each {|square| puts square}
+    @open_squares.each {|square| print "#{square} "}
     return 0
   end
 
-  def game_over?
-    return three_in_a_row?
+  def game_over
+    return game_results
   end
 
   #ai takes its turn when this method is called
