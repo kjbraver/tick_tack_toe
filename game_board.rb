@@ -5,6 +5,8 @@ class GameBoard
     @player_mark = "O" unless @player_mark.eql?("X")
     player_mark.eql?("X") ? @ai_mark = "O" : @ai_mark = "X"
 
+    @game_over = false
+
     @move_log = {
       :top_left => " ",
       :top_middle => " ",
@@ -35,6 +37,8 @@ class GameBoard
       :right_column => :neutral,
       :left_diagonal => :neutral,
       :right_diagonal => :neutral}
+
+    @open_squares = @move_log.keys
   end
 
   private
@@ -66,25 +70,26 @@ class GameBoard
 
   #if game can be won on next turn, return that the location of that square immediately
   #else return the location of a square where there is threat of loss
-  #if no win lane is in threat of loss return nil 
+  #if no threat of loss return random empty square
+  #if the game is over return nil 
   def prioritize_moveset
     analyze_board
-    threat_of_loss = nil
+    priority_move = nil
 
     @board_state.each do |location, state|
-      return find_empty_square(location) if state.eql?(:lean_ai)
-      threat_of_loss = location if state.eql?(:lean_player)
+      return next_empty_square(location) if state.eql?(:lean_ai)
+      priority_move = location if state.eql?(:lean_player)
     end
     
-    if threat_of_loss.nil?
-      return nil
+    if priority_move.nil?
+      return @open_squares.sample
     else
-      return find_empty_square(threat_of_loss)
+      return next_empty_square(priority_move)
     end
   end
 
   #given a win_lane, this method will find its first empty square (i.e. " ")
-  def find_empty_square(win_lane)
+  def next_empty_square(win_lane)
     @win_lanes[win_lane].each do |square|
       return square if @move_log[square].eql?(" ")
     end
@@ -92,24 +97,32 @@ class GameBoard
 
   #updates the board to reflect a given move
   def update_game_board(location, move)
+    @open_squares.delete(location)
     @move_log[location] = move
   end
 
-  #public methods below
-  public
-  
-  def record_player_move(location, move)
-    return false if(!@move_log.keys.include?(location) || !move.match(/[XxOo]/))
-    
-    update_game_board(location, move.upcase)
-    return true
+  def three_in_a_row?
+    analyze_board
+    @board_state.each do |location, state|
+      return true if state.eql?(:win_player) || state.eql?(:win_ai)
+    end
+    return false
   end
 
-  #prints a summary of @game_state to screen
-  def display_board_state
-    analyze_board
-    @board_state.each {|key, value| puts "#{key}: #{value}"}
+  public
+  
+  def record_player_move(location)
+    return -1 if !@open_squares.include?(location)
+    
+    update_game_board(location, @player_mark)
+    return 0
   end
+
+  # #prints a summary of @game_state to screen
+  # def display_board_state
+  #   analyze_board
+  #   @board_state.each {|key, value| puts "#{key}: #{value}"}
+  # end
 
   #prints game board to screen
   def display_board
@@ -120,10 +133,22 @@ class GameBoard
     puts "-------------"
     puts "  #{@move_log[:bottom_left]} | #{@move_log[:bottom_middle]} | #{@move_log[:bottom_right]} "
     puts ""
+    return 0
+  end
+
+  #displays still avaliable moves
+  def display_open_squares
+    @open_squares.each {|square| puts square}
+    return 0
+  end
+
+  def game_over?
+    return three_in_a_row?
   end
 
   #ai takes its turn when this method is called
   def ai_move
     update_game_board(prioritize_moveset, @ai_mark)
+    return 0
   end
 end
