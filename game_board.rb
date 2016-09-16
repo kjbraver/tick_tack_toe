@@ -106,11 +106,11 @@ class GameBoard
 
   def game_results
     analyze_board
-    return :catsgame if @open_squares.empty?
     @board_state.each do |location, state|
       return :player if state.eql?(:win_player) 
       return :ai if state.eql?(:win_ai)
     end
+    return :catsgame if @open_squares.empty?
     return nil
   end
 
@@ -122,12 +122,6 @@ class GameBoard
     update_game_board(location, @player_mark)
     return 0
   end
-
-  # #prints a summary of @game_state to screen
-  # def display_board_state
-  #   analyze_board
-  #   @board_state.each {|key, value| puts "#{key}: #{value}"}
-  # end
 
   #prints game board to screen
   def display_board
@@ -143,7 +137,7 @@ class GameBoard
 
   #displays still avaliable moves
   def display_open_squares
-    @open_squares.each {|square| print "#{square} "}
+    @open_squares.each_with_index {|square, index| puts "#{index+1}: #{square}"}
     return 0
   end
 
