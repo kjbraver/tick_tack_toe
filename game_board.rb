@@ -137,7 +137,7 @@ class GameBoard
 
   #displays still avaliable moves
   def display_open_squares
-    @open_squares.each_with_index {|square, index| puts "#{index+1}: #{square}"}
+    @open_squares.each {|square| puts "\u2022#{square}"}
     return 0
   end
 
